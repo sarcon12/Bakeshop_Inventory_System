@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Julie's Bakeshop Inventory System</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Segoe UI;
+min-height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-direction:column;
+
+background-image:
+linear-gradient(rgba(255,248,240,0.85),rgba(255,248,240,0.85)),
+url("https://images.unsplash.com/photo-1509440159596-0249088772ff");
+
+background-size:cover;
+background-position:center;
+background-attachment:fixed;
+}
+
+h1{
+color:#6b3e26;
+margin-top:20px;
+background:rgba(255,255,255,0.7);
+padding:10px 25px;
+border-radius:10px;
+box-shadow:0 5px 10px rgba(0,0,0,0.1);
+}
+
+.card{
+background:rgba(255,255,255,0.95);
+padding:25px;
+border-radius:15px;
+box-shadow:0 15px 30px rgba(0,0,0,0.25);
+width:420px;
+max-width:95%;
+text-align:center;
+border-top:6px solid #ff9a76;
+}
+
+input,select{
+width:90%;
+padding:10px;
+margin:8px;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+button{
+padding:10px 18px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin:6px;
+font-weight:bold;
+transition:0.2s;
+}
+
+button:hover{
+transform:scale(1.05);
+}
+
+.loginBtn{
+background:#ff7b54;
+color:white;
+}
+
+.logoutBtn{
+background:#c0392b;
+color:white;
+}
+
+.menu{
+margin-top:20px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+.menu button{
+background:#d96c3f;
+color:white;
+padding:12px;
+}
+
+.table{
+width:100%;
+margin-top:15px;
+border-collapse:collapse;
+}
+
+.table th,.table td{
+border:1px solid #ddd;
+padding:8px;
+}
+
+.hidden{
+display:none;
+}
+
+#content{
+margin-top:20px;
+width:95%;
+display:flex;
+justify-content:center;
+}
+
+.section{
+background:rgba(255,255,255,0.95);
+padding:20px;
+border-radius:15px;
+box-shadow:0 10px 20px rgba(0,0,0,0.2);
+width:700px;
+max-width:95%;
+border-left:6px solid #ff9a76;
+}
+
+@media (max-width:600px){
+
+.menu{
+grid-template-columns:1fr;
+}
+
+.card{
+width:95%;
+}
+
+.section{
+width:95%;
+}
+
+}
+
+.togglePass{
+position:absolute;
+right:10px;
+top:10px;
+cursor:pointer;
+color:#ff7b54;
+font-size:12px;
+user-select:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🍞 Julie's Bakeshop Daily Inventory System</h1>
+
+<div class="card" id="login">
+
+<h2>Login</h2>
+
+<select id="role">
+<option value="admin">Admin</option>
+<option value="manager">Branch Manager</option>
+</select>
+
+<input type="text" id="username" placeholder="Username">
+
+<div style="position:relative;width:90%;margin:auto;">
+<input type="password" id="password" placeholder="Password" style="width:100%;">
+<span class="togglePass" onclick="togglePassword()">Show</span>
+</div>
+
+<br>
+
+<button class="loginBtn" onclick="login()">Login</button>
+
+</div>
+
+<div class="card hidden" id="dashboard">
+
+<h2 id="welcome"></h2>
+
+<div class="menu" id="menu"></div>
+
+<button class="logoutBtn" onclick="logout()">Logout</button>
+
+</div>
+
+<div id="content"></div>
+
+<script>
+
+let products = JSON.parse(localStorage.getItem("products")) || [];
+
+function togglePassword(){
+  let pw = document.getElementById("password");
+  if(pw.type === "password"){
+    pw.type = "text";
+    event.target.innerText = "Hide";
+  } else {
+    pw.type = "password";
+    event.target.innerText = "Show";
+  }
+}
+
+function login(){
+
+let role=document.getElementById("role").value;
+let username=document.getElementById("username").value;
+
+document.getElementById("login").classList.add("hidden");
+document.getElementById("dashboard").classList.remove("hidden");
+
+document.getElementById("welcome").innerText="Welcome "+username;
+
+let menu="";
+
+if(role==="admin"){
+
+menu+=`<button onclick="manageProducts()">Manage Products</button>`;
+menu+=`<button onclick="deliveries()">Record Deliveries</button>`;
+menu+=`<button onclick="report()">Generate Inventory Report</button>`;
+
+}
+
+if(role==="manager"){
+
+menu+=`<button onclick="updateStock()">Update Stock</button>`;
+menu+=`<button onclick="deliveries()">Record Deliveries</button>`;
+menu+=`<button onclick="expiry()">Expiry Monitor</button>`;
+menu+=`<button onclick="viewStock()">Sales & Stock</button>`;
+
+}
+
+document.getElementById("menu").innerHTML=menu;
+
+}
+
+function logout(){
+location.reload();
+}
+
+function manageProducts(){
+
+let html=`<div class="section">
+<h2>Manage Products</h2>
+
+<input id="pname" placeholder="Product Name">
+
+<select id="pcategory">
+<option>Bread</option>
+<option>Cake</option>
+<option>Pastry</option>
+<option>Drinks</option>
+</select>
+
+<input id="pexpiry" type="date">
+
+<br>
+<button onclick="addProduct()">Add Product</button>
+
+<table class="table">
+<tr>
+<th>Product</th>
+<th>Category</th>
+<th>Expiry</th>
+<th>Stock</th>
+<th>Action</th>
+</tr>`;
+
+products.forEach((p,i)=>{
+html+=`
+<tr>
+<td>${p.name}</td>
+<td>${p.category}</td>
+<td>${p.expiry}</td>
+<td>${p.stock}</td>
+<td><button onclick="deleteProduct(${i})">Delete</button></td>
+</tr>`;
+});
+
+html+=`</table></div>`;
+
+document.getElementById("content").innerHTML=html;
+
+}
+
+function addProduct(){
+
+let name=document.getElementById("pname").value;
+let category=document.getElementById("pcategory").value;
+let expiry=document.getElementById("pexpiry").value;
+
+products.push({name:name,category:category,expiry:expiry,stock:0});
+
+localStorage.setItem("products",JSON.stringify(products));
+
+manageProducts();
+
+}
+
+function deleteProduct(i){
+
+products.splice(i,1);
+
+localStorage.setItem("products",JSON.stringify(products));
+
+manageProducts();
+
+}
+
+function deliveries(){
+
+let html=`<div class="section"><h2>Record Deliveries</h2>`;
+
+products.forEach((p,i)=>{
+html+=`
+<p>${p.name}</p>
+<input type="number" id="del${i}" placeholder="Delivered Qty">
+<button onclick="saveDelivery(${i})">Save</button>
+<hr>`;
+});
+
+html+=`</div>`;
+
+document.getElementById("content").innerHTML=html;
+
+}
+
+function saveDelivery(i){
+
+let qty=document.getElementById("del"+i).value;
+
+products[i].stock+=Number(qty);
+
+localStorage.setItem("products",JSON.stringify(products));
+
+deliveries();
+
+}
+
+function expiry(){
+
+let html=`<div class="section"><h2>Expiry Monitor</h2>`;
+
+let today=new Date();
+
+products.forEach(p=>{
+
+let exp=new Date(p.expiry);
+let diff=(exp-today)/(1000*60*60*24);
+
+if(exp<today){
+html+=`<p style="color:red">⚠ ${p.name} EXPIRED</p>`;
+}
+else if(diff<=3){
+html+=`<p style="color:orange">⚠ ${p.name} expiring within 3 days</p>`;
+}
+else{
+html+=`<p>${p.name} - Expiry: ${p.expiry}</p>`;
+}
+
+});
+
+html+=`</div>`;
+
+document.getElementById("content").innerHTML=html;
+
+}
+
+function viewStock(){
+
+let html=`<div class="section">
+<h2>Sales & Stock</h2>
+
+<table class="table">
+<tr>
+<th>Product</th>
+<th>Stock</th>
+</tr>`;
+
+products.forEach(p=>{
+html+=`<tr><td>${p.name}</td><td>${p.stock}</td></tr>`;
+});
+
+html+=`</table></div>`;
+
+document.getElementById("content").innerHTML=html;
+
+}
+
+function report(){
+
+let html=`<div class="section">
+<h2>Inventory Report</h2>
+
+<button onclick="downloadExcel()">Download Excel</button>
+<br><br>`;
+
+products.forEach(p=>{
+html+=`<p>${p.name} | ${p.category} | Stock: ${p.stock} | Expiry: ${p.expiry}</p>`;
+});
+
+html+=`</div>`;
+
+document.getElementById("content").innerHTML=html;
+
+}
+
+function downloadExcel(){
+
+let csv="Product,Category,Stock,Expiry\n";
+
+products.forEach(p=>{
+csv+=`${p.name},${p.category},${p.stock},${p.expiry}\n`;
+});
+
+let blob=new Blob([csv]);
+
+let a=document.createElement("a");
+
+a.href=URL.createObjectURL(blob);
+
+a.download="inventory_report.csv";
+
+a.click();
+
+}
+
+</script>
+
+</body>
+</html>
